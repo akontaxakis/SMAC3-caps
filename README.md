@@ -57,7 +57,7 @@ sel_algo = "caps-greedy"           # options: caps-greedy, caps-beam_search, fla
 lamda = 0.5                      # used with caps-greedy and caps-beam_search
 selection = 8                  # CAPS-specific parameter that identifies how many pipelines to be selected
 N = 20                      #parameter taht specifies how many pipelines to be generated
-data_id = "dionis"           # unique identifier for using a dataset and for history graph + logging files
+data_id = "jannis"           # unique identifier for using a dataset and for history graph + logging files
 ```
 
 ### Contact

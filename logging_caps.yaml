@@ -1,0 +1,21 @@
+disable_existing_loggers: false
+formatters:
+  simple:
+    format: '[%(levelname)s][%(filename)s:%(lineno)d] %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: simple
+    level: INFO
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    filename: SMAC_jasmine_2222_10_1.log
+    formatter: simple
+    level: INFO
+root:
+  handlers:
+  - console
+  - file
+  level: INFO
+version: 1

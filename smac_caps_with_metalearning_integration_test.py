@@ -18,7 +18,7 @@ from ConfigSpace import ConfigurationSpace, CategoricalHyperparameter, UniformFl
 
 logging.basicConfig(level=logging.INFO)
 
-data_id = "jasmine"
+data_id = "jannis"
 seed = 7777
 selection = 8
 sel_algo = "caps_greedy"

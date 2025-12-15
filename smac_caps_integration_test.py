@@ -19,7 +19,7 @@ from sklearn.decomposition import PCA
 logging.basicConfig(level=logging.INFO)
 
 
-data_id = "dionis"
+data_id = "jannis"
 seed = 7777
 selection = 8
 sel_algo = "caps_greedy"

@@ -156,7 +156,7 @@ class ConfigSelector:
             sklearn_pipeline_list = []
             scores = []
             for config in self._initial_design_configs:
-                sklearn_pipeline = config_to_pipeline(config)
+                sklearn_pipeline = config_to_pipeline(config, self._scenario.seed)
                 sklearn_pipeline_list.append(sklearn_pipeline)
                 scores.append(1)
 
@@ -249,7 +249,7 @@ class ConfigSelector:
                 # USING THE BAYESIAN MODEL TO GET THE SCORE PREDICTIONS
                 for config in challengers:
                     reshaped_list = [config._vector]
-                    sklearn_pipeline = config_to_pipeline(config)
+                    sklearn_pipeline = config_to_pipeline(config, self._scenario.seed)
                     sklearn_pipeline_list.append(sklearn_pipeline)
                     reshaped_array = np.array(reshaped_list)
                     predicted_performance = self._model.predict(reshaped_array)

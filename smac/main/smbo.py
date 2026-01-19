@@ -202,21 +202,19 @@ class SMBO:
         if self._intensifier.uses_budgets and info.budget is None:
             raise ValueError("Passed budget is None but intensifier requires budgets.")
 
-        #CAPS UPDATE METHOD
-
-        sklearn_pipeline = config_to_pipeline(info.config)
-        if isinstance(value.cost, list) and len(value.cost) > 0:
-            score = value.cost[0]
-        else:
-            score = value.cost
-        logger.info(
-                f"Pipeline: {sklearn_pipeline}, Fitting time: {value.time} seconds, Score: {score},budget={info.budget}")
-
+        # CAPS UPDATE METHOD
         if self._scenario.mode == "CAPS":
+            sklearn_pipeline = config_to_pipeline(info.config, self._scenario.seed)
+            if isinstance(value.cost, list) and len(value.cost) > 0:
+                score = value.cost[0]
+            else:
+                score = value.cost
+            logger.info(
+                f"Pipeline: {sklearn_pipeline}, Fitting time: {value.time} seconds, Score: {score},budget={info.budget}")
             pipeline_scores = []
             pipeline_scores.append({
                 "pipeline": sklearn_pipeline,
-                "score": score-1,
+                "score": 1-score,
                 "fitting_time": value.time
             })
             CAPS_update(sel_algo=self._scenario.sel_algo,

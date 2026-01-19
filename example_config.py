@@ -143,6 +143,202 @@ def get_tpot_configspace_classifiers_for_SMAC4AC():
     return cs
 
 
+
+from ConfigSpace import (
+    ConfigurationSpace,
+    CategoricalHyperparameter,
+    UniformFloatHyperparameter,
+    UniformIntegerHyperparameter,
+    EqualsCondition,
+)
+
+
+def get_tpot_configspace_classifiers_for_SMAC4AC_full():
+    cs = ConfigurationSpace()
+
+    # ==================================================
+    # Pipeline structure
+    # ==================================================
+
+    preprocessing = CategoricalHyperparameter(
+        "preprocessing",
+        [
+            "None",
+            "sklearn.preprocessing.Binarizer",
+            "sklearn.preprocessing.MaxAbsScaler",
+            "sklearn.preprocessing.MinMaxScaler",
+            "sklearn.preprocessing.Normalizer",
+            "sklearn.preprocessing.RobustScaler",
+            "sklearn.preprocessing.StandardScaler",
+        ],
+    )
+
+    feature_engineering = CategoricalHyperparameter(
+        "feature_engineering",
+        [
+            "None",
+            "sklearn.decomposition.FastICA",
+            "sklearn.cluster.FeatureAgglomeration",
+            "sklearn.kernel_approximation.Nystroem",
+            "sklearn.decomposition.PCA",
+            "sklearn.preprocessing.PolynomialFeatures",
+            "sklearn.kernel_approximation.RBFSampler",
+            "tpot.builtins.ZeroCount",
+            "sklearn.feature_selection.SelectFwe",
+            "sklearn.feature_selection.SelectPercentile",
+            "sklearn.feature_selection.VarianceThreshold",
+            "sklearn.feature_selection.RFE",
+            "sklearn.feature_selection.SelectFromModel",
+        ],
+    )
+
+    classifier = CategoricalHyperparameter(
+        "classifier",
+        [
+            "sklearn.naive_bayes.GaussianNB",
+            "sklearn.naive_bayes.BernoulliNB",
+            "sklearn.naive_bayes.MultinomialNB",
+            "sklearn.tree.DecisionTreeClassifier",
+            "sklearn.ensemble.ExtraTreesClassifier",
+            "sklearn.ensemble.RandomForestClassifier",
+            "sklearn.ensemble.GradientBoostingClassifier",
+            "sklearn.neighbors.KNeighborsClassifier",
+            "sklearn.svm.LinearSVC",
+            "sklearn.linear_model.LogisticRegression",
+            "sklearn.linear_model.SGDClassifier",
+            "sklearn.neural_network.MLPClassifier",
+            "xgboost.XGBClassifier",
+        ],
+    )
+
+    cs.add([preprocessing, feature_engineering, classifier])
+
+    # ==================================================
+    # Preprocessing
+    # ==================================================
+
+    bin_thresh = UniformFloatHyperparameter("Binarizer__threshold", 0.0, 1.0)
+    norm_norm = CategoricalHyperparameter("Normalizer__norm", ["l1", "l2", "max"])
+    cs.add([bin_thresh, norm_norm])
+    cs.add(EqualsCondition(bin_thresh, preprocessing, "sklearn.preprocessing.Binarizer"))
+    cs.add(EqualsCondition(norm_norm, preprocessing, "sklearn.preprocessing.Normalizer"))
+
+    # ==================================================
+    # Feature engineering
+    # ==================================================
+
+    ica_tol = UniformFloatHyperparameter("FastICA__tol", 0.0, 1.0)
+    cs.add(ica_tol)
+    cs.add(EqualsCondition(ica_tol, feature_engineering, "sklearn.decomposition.FastICA"))
+
+    agg_link = CategoricalHyperparameter(
+        "FeatureAgglomeration__linkage", ["ward", "complete", "average"]
+    )
+    agg_aff = CategoricalHyperparameter(
+        "FeatureAgglomeration__affinity",
+        ["euclidean", "l1", "l2", "manhattan", "cosine"],
+    )
+    cs.add([agg_link, agg_aff])
+    cs.add(EqualsCondition(agg_link, feature_engineering, "sklearn.cluster.FeatureAgglomeration"))
+    cs.add(EqualsCondition(agg_aff, feature_engineering, "sklearn.cluster.FeatureAgglomeration"))
+
+    nys_kernel = CategoricalHyperparameter(
+        "Nystroem__kernel",
+        ["rbf", "cosine", "chi2", "laplacian", "polynomial", "poly", "linear", "additive_chi2", "sigmoid"],
+    )
+    nys_gamma = UniformFloatHyperparameter("Nystroem__gamma", 0.0, 1.0)
+    nys_comp = UniformIntegerHyperparameter("Nystroem__n_components", 1, 10)
+    cs.add([nys_kernel, nys_gamma, nys_comp])
+    cs.add(EqualsCondition(nys_kernel, feature_engineering, "sklearn.kernel_approximation.Nystroem"))
+    cs.add(EqualsCondition(nys_gamma, feature_engineering, "sklearn.kernel_approximation.Nystroem"))
+    cs.add(EqualsCondition(nys_comp, feature_engineering, "sklearn.kernel_approximation.Nystroem"))
+
+    pca_solver = CategoricalHyperparameter("PCA__svd_solver", ["randomized"])
+    pca_power = UniformIntegerHyperparameter("PCA__iterated_power", 1, 10)
+    cs.add([pca_solver, pca_power])
+    cs.add(EqualsCondition(pca_solver, feature_engineering, "sklearn.decomposition.PCA"))
+    cs.add(EqualsCondition(pca_power, feature_engineering, "sklearn.decomposition.PCA"))
+
+    poly_deg = CategoricalHyperparameter("PolynomialFeatures__degree", [2])
+    poly_bias = CategoricalHyperparameter("PolynomialFeatures__include_bias", [False])
+    poly_inter = CategoricalHyperparameter("PolynomialFeatures__interaction_only", [False])
+    cs.add([poly_deg, poly_bias, poly_inter])
+    cs.add(EqualsCondition(poly_deg, feature_engineering, "sklearn.preprocessing.PolynomialFeatures"))
+    cs.add(EqualsCondition(poly_bias, feature_engineering, "sklearn.preprocessing.PolynomialFeatures"))
+    cs.add(EqualsCondition(poly_inter, feature_engineering, "sklearn.preprocessing.PolynomialFeatures"))
+
+    rbf_gamma = UniformFloatHyperparameter("RBFSampler__gamma", 0.0, 1.0)
+    cs.add(rbf_gamma)
+    cs.add(EqualsCondition(rbf_gamma, feature_engineering, "sklearn.kernel_approximation.RBFSampler"))
+
+    fwe_alpha = UniformFloatHyperparameter("SelectFwe__alpha", 0.0, 0.05)
+    sp_pct = UniformIntegerHyperparameter("SelectPercentile__percentile", 1, 99)
+    vt_thresh = CategoricalHyperparameter(
+        "VarianceThreshold__threshold", [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.2]
+    )
+    cs.add([fwe_alpha, sp_pct, vt_thresh])
+    cs.add(EqualsCondition(fwe_alpha, feature_engineering, "sklearn.feature_selection.SelectFwe"))
+    cs.add(EqualsCondition(sp_pct, feature_engineering, "sklearn.feature_selection.SelectPercentile"))
+    cs.add(EqualsCondition(vt_thresh, feature_engineering, "sklearn.feature_selection.VarianceThreshold"))
+
+    sfm_thresh = UniformFloatHyperparameter("SelectFromModel__threshold", 0.0, 1.0)
+    cs.add(sfm_thresh)
+    cs.add(EqualsCondition(sfm_thresh, feature_engineering, "sklearn.feature_selection.SelectFromModel"))
+
+    rfe_step = UniformFloatHyperparameter("RFE__step", 0.05, 1.0)
+    cs.add(rfe_step)
+    cs.add(EqualsCondition(rfe_step, feature_engineering, "sklearn.feature_selection.RFE"))
+
+    # ==================================================
+    # Classifiers
+    # ==================================================
+
+    # Bernoulli / Multinomial NB
+    bnb_alpha = CategoricalHyperparameter("BernoulliNB__alpha", [1e-3, 1e-2, 1e-1, 1.0, 10.0, 100.0])
+    bnb_fit = CategoricalHyperparameter("BernoulliNB__fit_prior", [True, False])
+    mnb_alpha = CategoricalHyperparameter("MultinomialNB__alpha", [1e-3, 1e-2, 1e-1, 1.0, 10.0, 100.0])
+    mnb_fit = CategoricalHyperparameter("MultinomialNB__fit_prior", [True, False])
+    cs.add([bnb_alpha, bnb_fit, mnb_alpha, mnb_fit])
+    cs.add(EqualsCondition(bnb_alpha, classifier, "sklearn.naive_bayes.BernoulliNB"))
+    cs.add(EqualsCondition(bnb_fit, classifier, "sklearn.naive_bayes.BernoulliNB"))
+    cs.add(EqualsCondition(mnb_alpha, classifier, "sklearn.naive_bayes.MultinomialNB"))
+    cs.add(EqualsCondition(mnb_fit, classifier, "sklearn.naive_bayes.MultinomialNB"))
+
+    # KNN
+    knn_k = UniformIntegerHyperparameter("KNeighborsClassifier__n_neighbors", 1, 100)
+    knn_w = CategoricalHyperparameter("KNeighborsClassifier__weights", ["uniform", "distance"])
+    knn_p = CategoricalHyperparameter("KNeighborsClassifier__p", [1, 2])
+    cs.add([knn_k, knn_w, knn_p])
+    for hp in [knn_k, knn_w, knn_p]:
+        cs.add(EqualsCondition(hp, classifier, "sklearn.neighbors.KNeighborsClassifier"))
+
+    # LinearSVC
+    lsvc_pen = CategoricalHyperparameter("LinearSVC__penalty", ["l1", "l2"])
+    lsvc_loss = CategoricalHyperparameter("LinearSVC__loss", ["hinge", "squared_hinge"])
+    lsvc_dual = CategoricalHyperparameter("LinearSVC__dual", [True, False])
+    lsvc_tol = CategoricalHyperparameter("LinearSVC__tol", [1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
+    lsvc_c = CategoricalHyperparameter(
+        "LinearSVC__C", [1e-4, 1e-3, 1e-2, 1e-1, 0.5, 1.0, 5.0, 10.0, 15.0, 20.0, 25.0]
+    )
+    cs.add([lsvc_pen, lsvc_loss, lsvc_dual, lsvc_tol, lsvc_c])
+    for hp in [lsvc_pen, lsvc_loss, lsvc_dual, lsvc_tol, lsvc_c]:
+        cs.add(EqualsCondition(hp, classifier, "sklearn.svm.LinearSVC"))
+
+    # LogisticRegression
+    lr_pen = CategoricalHyperparameter("LogisticRegression__penalty", ["l1", "l2"])
+    lr_c = CategoricalHyperparameter(
+        "LogisticRegression__C", [1e-4, 1e-3, 1e-2, 1e-1, 0.5, 1.0, 5.0, 10.0, 15.0, 20.0, 25.0]
+    )
+    lr_dual = CategoricalHyperparameter("LogisticRegression__dual", [True, False])
+    cs.add([lr_pen, lr_c, lr_dual])
+    cs.add(EqualsCondition(lr_pen, classifier, "sklearn.linear_model.LogisticRegression"))
+    cs.add(EqualsCondition(lr_c, classifier, "sklearn.linear_model.LogisticRegression"))
+    cs.add(EqualsCondition(lr_dual, classifier, "sklearn.linear_model.LogisticRegression"))
+
+    return cs
+
+
+
 def update_log_filename(file_path: str, new_filename: str) -> str:
     with open(file_path, 'r') as file:
         config = yaml.safe_load(file)
@@ -160,6 +356,31 @@ def update_log_filename(file_path: str, new_filename: str) -> str:
 
     print(f"Log filename updated to '{new_filename}' and saved as '{output_file_path}'.")
     return output_file_path
+
+def adapt_meta_config_to_full_cs(meta_cfg: dict, cs) -> dict:
+    cfg = meta_cfg.copy()
+
+    # Extract legacy preprocessor
+    legacy = cfg.pop("preprocessor", None)
+
+    # Default structure
+    cfg.setdefault("preprocessing", "None")
+    cfg.setdefault("feature_engineering", "None")
+
+    # Map legacy preprocessor correctly
+    if legacy is not None:
+        if legacy.startswith("sklearn.preprocessing."):
+            cfg["preprocessing"] = legacy
+        else:
+            # PCA, FastICA, etc. belong to feature_engineering
+            cfg["feature_engineering"] = legacy
+
+    # Remove hyperparameters not in the ConfigSpace
+    valid = set(cs.get_hyperparameter_names())
+    cfg = {k: v for k, v in cfg.items() if k in valid}
+
+    return cfg
+
 
 def get_metalearning_pipelines(data_id):
     configspace = get_tpot_configspace_classifiers_for_SMAC4AC()
@@ -2358,6 +2579,15 @@ def get_metalearning_pipelines(data_id):
 
     # Build validated Configuration objects
     # Digits
+    full_cs = get_tpot_configspace_classifiers_for_SMAC4AC_full()
 
-    INITIAL_CONFIGS = [Configuration(configspace, values=d) for d in INITIAL_CONFIGS_VALUES]
+    INITIAL_CONFIGS = [
+        Configuration(full_cs, values=adapt_meta_config_to_full_cs(d, full_cs))
+        for d in INITIAL_CONFIGS_VALUES
+    ]
+
     return INITIAL_CONFIGS
+    #INITIAL_CONFIGS = [Configuration(configspace, values=d) for d in INITIAL_CONFIGS_VALUES]
+    #return INITIAL_CONFIGS
+
+

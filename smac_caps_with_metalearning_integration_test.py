@@ -2,9 +2,9 @@ from pathlib import Path
 import logging
 
 from AutoML_data_manager.data_manager import DataManager
-from example_config import get_tpot_configspace_classifiers_for_SMAC4AC, update_log_filename, \
+from example_config import update_log_filename, \
     get_metalearning_pipelines, get_tpot_configspace_classifiers_for_SMAC4AC_full
-from example_function import train_without_budget, train_full
+from example_function import train_full
 from smac import Scenario, AlgorithmConfigurationFacade
 from ConfigSpace import Configuration
 
